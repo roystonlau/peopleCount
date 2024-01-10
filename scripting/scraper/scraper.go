@@ -1,36 +1,60 @@
 package scraper
 
 import (
-	"fmt"
+	"strings"
 
 	"github.com/gocolly/colly"
 )
 
+type MotorNews struct {
+	Time string
+	Desc string
+}
 
-func Scrape()[]map[string]string {
-	var myArray = []map[string]string{}
+var previousFirst = []MotorNews{}
+
+func Scrape() []MotorNews {
+	// var result []MotorNews
+	c := colly.NewCollector(
+		colly.AllowedDomains("onemotoring.lta.gov.sg"),
+	)
+
+	c.OnHTML(".pie", func(e *colly.HTMLElement) {
+		url := e.Request.URL.String()
+
+    // Check which site the URL is from
+    if strings.Contains(url, "onemotoring.lta.gov.sg") {
+        // Handle elements from onemotoring.lta.gov.sg
+        desc := e.ChildText(".traffic-updates__desc")
+        time := e.ChildText(".traffic-updates__time")
+
+        news := MotorNews{Desc: desc, Time: time}
+
+        if len(previousFirst) > 0 && news == previousFirst[0] {
+            return  
+        }
+        previousFirst = append(previousFirst, news)
+    } else if strings.Contains(url, "channelnewsasia.com") {
+        // Handle elements from channelnewsasia.com
+        // Replace ".traffic-updates__desc" and ".traffic-updates__time" with the appropriate selectors for this site
+        desc := e.ChildText(".selector-for-desc")
+        time := e.ChildText(".selector-for-time")
+
+        news := MotorNews{Desc: desc, Time: time}
+
+        if len(previousFirst) > 0 && news == previousFirst[0] {
+            return  
+        }
+        previousFirst = append(previousFirst, news)
+    }
+})
+ 
+
+	err:= c.Visit("https://onemotoring.lta.gov.sg/content/onemotoring/home/driving/traffic_information/traffic_updates_and_road_closures.html")
 	
-    c := colly.NewCollector(
-        colly.AllowedDomains("hackerspaces.org", "wiki.hackerspaces.org"),
-    )
+	if err != nil {
+		panic(err)
+	}
 
-    c.OnHTML("a[href]", func(e *colly.HTMLElement) {
-        link := e.Attr("href")
-		linkText:=e.Text
-        fmt.Printf("Link found: %q -> %s\n", e.Text, link)
-		myArray = append(myArray,map[string]string{linkText: link} )
-
-		if len(myArray) <5 {
-
-			c.Visit(e.Request.AbsoluteURL(link))
-		}
-    })
-
-    c.OnRequest(func(r *colly.Request) {
-        fmt.Println("Visiting", r.URL.String())
-    })
-
-    c.Visit("https://hackerspaces.org/")
-
-	return myArray
+	return previousFirst
 }

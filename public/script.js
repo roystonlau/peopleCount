@@ -9,7 +9,7 @@ const procedureElement = document.getElementById("procedure");
 let incidentType;
 let incidentTypeSelected = 1;
 
-fetch("http://localhost:4000/getIncidentType")
+fetch("http://localhost:3000/getIncidentType")
   .then((response) => response.json())
   .then((data) => {
     incidentType = data;
@@ -59,7 +59,7 @@ function submitIncidentHandler(event) {
   const formElement = document.getElementById("incidentForm");
   const formData = new FormData(formElement);
 
-  fetch("http://localhost:4000/insertIncident", {
+  fetch("http://localhost:3000/insertIncident", {
     method: "POST",
     body: formData,
   })
